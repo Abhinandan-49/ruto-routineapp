@@ -260,13 +260,15 @@ function setupLofiPlayer() {
   const audio = document.getElementById('lofi-audio');
   const toggleBtn = document.getElementById('lofi-player-toggle');
   const playIcon = document.getElementById('lofi-play-icon');
-  const trackDot = document.getElementById('lofi-track-dot');
   const volumeSlider = document.getElementById('lofi-volume-slider');
+  const volumeIcon = document.getElementById('lofi-volume-icon');
+  const coverContainer = document.getElementById('lofi-cover-container');
 
-  if (!audio || !toggleBtn || !playIcon || !trackDot || !volumeSlider) return;
+  if (!audio || !toggleBtn || !playIcon || !volumeSlider || !volumeIcon || !coverContainer) return;
 
   // Set initial default volume from slider
   audio.volume = parseFloat(volumeSlider.value);
+  let preMuteVolume = audio.volume || 0.5;
 
   // Autoplay function: handles browser permission restriction cleanly
   function attemptAutoplay() {
@@ -281,7 +283,6 @@ function setupLofiPlayer() {
             .catch(err => console.log("Play failed on interaction:", err));
         };
 
-        // Bind interaction triggers
         document.addEventListener('click', playOnInteraction);
         document.addEventListener('keydown', playOnInteraction);
         document.addEventListener('touchstart', playOnInteraction);
@@ -301,12 +302,11 @@ function setupLofiPlayer() {
   audio.addEventListener('ended', () => updateUI(false));
   audio.addEventListener('error', () => updateUI(false));
 
-  // Attempt to play music immediately
   attemptAutoplay();
 
   // Play/Pause button click
   toggleBtn.addEventListener('click', (e) => {
-    e.stopPropagation(); // Avoid triggering document interaction listener
+    e.stopPropagation();
     if (audio.paused) {
       audio.play().catch(err => console.error(err));
     } else {
@@ -316,19 +316,47 @@ function setupLofiPlayer() {
 
   // Dynamic volume adjustment
   volumeSlider.addEventListener('input', (e) => {
-    audio.volume = parseFloat(e.target.value);
+    const vol = parseFloat(e.target.value);
+    audio.volume = vol;
+    updateVolumeIcon(vol);
   });
+
+  // Mute toggle on volume icon click
+  volumeIcon.addEventListener('click', () => {
+    if (audio.volume > 0) {
+      preMuteVolume = audio.volume;
+      audio.volume = 0;
+      volumeSlider.value = 0;
+      updateVolumeIcon(0);
+    } else {
+      audio.volume = preMuteVolume;
+      volumeSlider.value = preMuteVolume;
+      updateVolumeIcon(preMuteVolume);
+    }
+  });
+
+  function updateVolumeIcon(vol) {
+    if (vol === 0) {
+      volumeIcon.setAttribute('data-lucide', 'volume-x');
+    } else if (vol < 0.4) {
+      volumeIcon.setAttribute('data-lucide', 'volume-1');
+    } else {
+      volumeIcon.setAttribute('data-lucide', 'volume-2');
+    }
+    if (window.lucide) {
+      window.lucide.createIcons();
+    }
+  }
 
   function updateUI(isPlaying) {
     if (isPlaying) {
       playIcon.setAttribute('data-lucide', 'pause');
-      trackDot.classList.add('playing');
+      coverContainer.classList.add('playing');
     } else {
       playIcon.setAttribute('data-lucide', 'play');
-      trackDot.classList.remove('playing');
+      coverContainer.classList.remove('playing');
     }
 
-    // Refresh Lucide icon graphics
     if (window.lucide) {
       window.lucide.createIcons();
     }

@@ -23,7 +23,10 @@ let lightRafId = null;
 let mouseX = 0, mouseY = 0;
 
 // ── Initialization ─────────────────────────────────────────────────────────
+let initialized = false;
 export function initPremiumEffects() {
+  if (initialized) return;
+  initialized = true;
   initCustomCursorAndGlow();
   initInnerLightTracking();
   initMagneticButtons();
